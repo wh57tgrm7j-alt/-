@@ -19,13 +19,13 @@ typedef struct {
     int open;                    
     char* puzzle_desc;
     char* puzzle_answer;
-    int connections[MAX_ROOMS];  
+    int connections[MAX_ROOMS]; 
     int from_connections[MAX_ROOMS];
 } Room;
 
 typedef struct {
     int current_room;
-    int x, y;                    
+    int x, y;                   
 } Player;
 
 Room rooms[MAX_ROOMS];
@@ -105,8 +105,9 @@ void reset_terminal() {
 }
 
 void init_rooms() {
+
     rooms[0].id = 0;
-    strcpy(rooms[0].map[0], room1_map[0]);
+    strcpy(rooms[0].map[0], room1_map[0]); 
     for(int i = 0; i < HEIGHT; i++) strcpy(rooms[0].map[i], room1_map[i]);
     rooms[0].open = 1;
     rooms[0].puzzle_desc = NULL;
@@ -120,7 +121,7 @@ void init_rooms() {
     rooms[1].puzzle_desc = (char*)puzzle1_desc;
     rooms[1].puzzle_answer = (char*)puzzle1_answer;
     memset(rooms[1].connections, 0, sizeof(rooms[1].connections));
-    rooms[1].connections[2] = 1;
+    rooms[1].connections[2] = 1; 
 
     rooms[2].id = 2;
     for(int i = 0; i < HEIGHT; i++) strcpy(rooms[2].map[i], room3_map[i]);
@@ -191,4 +192,80 @@ int can_move_to(int target_room) {
 }
 
 void move_player(int dx, int dy) {
-    newx
+    int newx = player.x + dx;
+    int newy = player.y + dy;
+    Room* r = &rooms[player.current_room];
+    
+    if(newx > 0 && newx < WIDTH-1 && newy > 0 && newy < HEIGHT-1) {
+        if(r->map[newy][newx] == ' ') {
+            player.x = newx;
+            player.y = newy;
+        }
+    }
+}
+
+int main() {
+    set_raw_mode();
+    init_rooms();
+    
+    player.current_room = ROOM_START;
+    place_player();
+    
+    printf("Добро пожаловать в подземный лабиринт!\n");
+    printf("Цель - добраться до выхода (комната 3).\n\n");
+    sleep(2);
+    
+    while(!game_over) {
+        draw_room();
+        
+        char ch = getchar();
+        
+        if(ch == '\033') { 
+            getchar(); 
+            ch = getchar();
+            if(ch == 'A') { 
+                move_player(0, -1);
+            } else if(ch == 'B') { 
+                move_player(0, 1);
+            } else if(ch == 'C') { 
+                move_player(1, 0);
+            } else if(ch == 'D') { 
+                move_player(-1, 0);
+            }
+        } 
+        else if(ch == 'w' || ch == 'W') move_player(0, -1);
+        else if(ch == 's' || ch == 'S') move_player(0, 1);
+        else if(ch == 'a' || ch == 'A') move_player(-1, 0);
+        else if(ch == 'd' || ch == 'D') move_player(1, 0);
+        else if(ch == 'e' || ch == 'E') {
+            Room* r = &rooms[player.current_room];
+            if(!r->open && r->puzzle_desc) {
+                try_solve_puzzle();
+            }
+        }
+        else if(ch == 'q' || ch == 'Q') {
+            game_over = 1;
+        }
+        
+        Room* current = &rooms[player.current_room];
+        if(current->map[player.y][player.x] == '>' || 
+           (player.y == 8 && player.x > 15 && player.current_room == 0)) { 
+            if(player.current_room == 0 && rooms[1].open) {
+                player.current_room = 1;
+                place_player();
+            } else if(player.current_room == 1 && rooms[2].open) {
+                player.current_room = 2;
+                place_player();
+            }
+        }
+        
+        if(player.current_room == ROOM_EXIT) {
+            draw_room();
+            printf("\n\n*** ПОЗДРАВЛЯЕМ! ВЫ ВЫБРАЛИСЬ ИЗ ЛАБИРИНТА! ***\n");
+            game_over = 1;
+        }
+    }
+    
+    reset_terminal();
+    return 0;
+}
