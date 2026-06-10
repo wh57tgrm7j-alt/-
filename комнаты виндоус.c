@@ -79,7 +79,7 @@ void init_rooms() {
 
     for (int i = 0; i < HEIGHT; i++) strcpy(rooms[1].map[i], room2_map[i]);
     rooms[1].id = 1;
-    rooms[1].open = 1; // чтобы можно было перейти
+    rooms[1].open = 1;
     rooms[1].connections[2] = 1;
 
     for (int i = 0; i < HEIGHT; i++) strcpy(rooms[2].map[i], room3_map[i]);
